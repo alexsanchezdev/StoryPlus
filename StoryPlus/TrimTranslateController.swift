@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Speech
 
 class TrimTranslateController: UIViewController {
 
@@ -15,4 +16,5 @@ class TrimTranslateController: UIViewController {
         
     }
     
+
 }

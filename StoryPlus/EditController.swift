@@ -15,7 +15,10 @@ class EditController: UIViewController {
     
     var videoURL: URL?
     var trimDuration: Float?
-    let semaphore = DispatchSemaphore(value: 1)
+    var stringToShow = ""
+    var startTime: Float = 0
+    var endTime: Float = 0
+    var first = true
     
     let videoThumbnail: UIImageView = {
         let image = UIImageView()
@@ -32,11 +35,25 @@ class EditController: UIViewController {
         button.addTarget(self, action: #selector(handleOptions), for: .touchUpInside)
         return button
     }()
+    
+    let label: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont.systemFont(ofSize: 24, weight: UIFontWeightRegular)
+        label.numberOfLines = 0
+        label.lineBreakMode = NSLineBreakMode.byWordWrapping
+        label.textColor = UIColor.white
+        label.textAlignment = .center
+        label.text = "Esto es una prueba a ver que tal funciona cogiendo el CALayer el problema es que no se porque no aparece en el otro lado"
+        return label
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationController?.isNavigationBarHidden = false
-        
+        SFSpeechRecognizer.requestAuthorization { (authStatus) in
+            print(authStatus)
+        }
         setupViews()
     }
 
@@ -54,6 +71,13 @@ class EditController: UIViewController {
         trimButton.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
         trimButton.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -40).isActive = true
         trimButton.heightAnchor.constraint(equalTo: view.widthAnchor, multiplier: 72).isActive = true
+        
+        view.addSubview(label)
+        label.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        label.topAnchor.constraint(equalTo: trimButton.bottomAnchor).isActive = true
+        label.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -40).isActive = true
+        
+        
 
     }
     
