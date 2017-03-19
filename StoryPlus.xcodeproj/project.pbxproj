@@ -16,6 +16,8 @@
 		6B5C5A9C1E7AE8ED00C2DD90 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B5C5A9B1E7AE8ED00C2DD90 /* Assets.xcassets */; };
 		6B5C5A9F1E7AE8ED00C2DD90 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6B5C5A9D1E7AE8ED00C2DD90 /* LaunchScreen.storyboard */; };
 		6B5C5AA71E7AF7E600C2DD90 /* EditController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5C5AA61E7AF7E600C2DD90 /* EditController.swift */; };
+		6BEE49671E7ED96D00F7BD79 /* TrimController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEE49661E7ED96D00F7BD79 /* TrimController.swift */; };
+		6BEE49691E7ED9B100F7BD79 /* TrimHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEE49681E7ED9B100F7BD79 /* TrimHandlers.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 		6B5C5A9E1E7AE8ED00C2DD90 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6B5C5AA01E7AE8ED00C2DD90 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B5C5AA61E7AF7E600C2DD90 /* EditController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditController.swift; sourceTree = "<group>"; };
+		6BEE49661E7ED96D00F7BD79 /* TrimController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrimController.swift; sourceTree = "<group>"; };
+		6BEE49681E7ED9B100F7BD79 /* TrimHandlers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrimHandlers.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +76,8 @@
 				6B0EECD71E7C2D4F00B79E7B /* TrimTranscriptController.swift */,
 				6B0EECD91E7C2DAA00B79E7B /* TrimTranslateController.swift */,
 				6B0EECD31E7C00BF00B79E7B /* Extensions.swift */,
+				6BEE49661E7ED96D00F7BD79 /* TrimController.swift */,
+				6BEE49681E7ED9B100F7BD79 /* TrimHandlers.swift */,
 			);
 			path = StoryPlus;
 			sourceTree = "<group>";
@@ -153,8 +159,10 @@
 				6B5C5AA71E7AF7E600C2DD90 /* EditController.swift in Sources */,
 				6B5C5A951E7AE8EC00C2DD90 /* AppDelegate.swift in Sources */,
 				6B0EECD81E7C2D4F00B79E7B /* TrimTranscriptController.swift in Sources */,
+				6BEE49691E7ED9B100F7BD79 /* TrimHandlers.swift in Sources */,
 				6B0EECD61E7C2CE900B79E7B /* EditHandlers.swift in Sources */,
 				6B0EECD41E7C00BF00B79E7B /* Extensions.swift in Sources */,
+				6BEE49671E7ED96D00F7BD79 /* TrimController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -18,7 +18,8 @@ class EditController: UIViewController {
     var stringToShow = ""
     var startTime: Float = 0
     var endTime: Float = 0
-    var first = true
+    var lastVideo = false
+    var assetDuration: Float?
     
     let videoThumbnail: UIImageView = {
         let image = UIImageView()

@@ -20,34 +20,19 @@ extension EditController {
         let asset = AVAsset(url: url)
         
         let length = Float(asset.duration.value) / Float(asset.duration.timescale)
-        let videosFromSeconds = length / duration
+        self.assetDuration = length
         
-        let reminder = length.truncatingRemainder(dividingBy: duration)
-        var numberOfVideos: Int
-        
-        if reminder != 0 {
-            numberOfVideos = Int(videosFromSeconds) + 1
+        if duration > length {
+            endTime = length
         } else {
-            numberOfVideos = Int(videosFromSeconds)
+            endTime = duration
         }
         
-        var startTime: Float = 0
-        var endTime = duration
         
-        for index in 1...numberOfVideos {
-            if index == numberOfVideos && reminder != 0{
-                print("Last recognize file called")
-                recognizeFile(start: startTime, end: startTime + reminder)
-            } else {
-                print("First recognize file called")
-                recognizeFile(start: startTime, end: endTime)
-                startTime = endTime
-                endTime = endTime + duration
-            }
-        }
+        recognizeFile()
     }
     
-    func trimAndComposition(start: Float, end: Float){
+    func trimAndComposition(){
         guard let url = videoURL else { return }
         let asset = AVAsset(url: url)
     
@@ -171,8 +156,8 @@ extension EditController {
         exportSession.outputURL = outputURL
         exportSession.outputFileType = AVFileTypeQuickTimeMovie
         
-        let startTime = CMTime(seconds: Double(start), preferredTimescale: 1000)
-        let endTime = CMTime(seconds: Double(end), preferredTimescale: 1000)
+        let startTime = CMTime(seconds: Double(self.startTime), preferredTimescale: 1000)
+        let endTime = CMTime(seconds: Double(self.endTime), preferredTimescale: 1000)
         let timeRange = CMTimeRange(start: startTime, end: endTime)
         exportSession.timeRange = timeRange
         exportSession.videoComposition = videoComp
@@ -197,12 +182,26 @@ extension EditController {
             PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: outputURL)
         }) { saved, error in
             if saved {
-                self.speechSemaphore.signal()
+                if !self.lastVideo{
+                    self.startTime = self.startTime + self.trimDuration!
+                    self.endTime = self.endTime + self.trimDuration!
+                    
+                    if self.endTime > self.assetDuration! {
+                        self.endTime = self.assetDuration!
+                        self.recognizeFile()
+                        self.lastVideo = true
+                    }
+                    
+                    if !self.lastVideo{
+                        self.recognizeFile()
+                    }
+                }
+                
             }
         }
     }
     
-    func recognizeFile(start: Float, end: Float) {
+    func recognizeFile() {
         guard let video = videoURL else { return }
         let asset = AVAsset(url: video)
         let manager = FileManager.default
@@ -222,8 +221,8 @@ extension EditController {
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else { return }
         exportSession.outputURL = outputURL
         exportSession.outputFileType = AVFileTypeAppleM4A
-        let startTime = CMTime(seconds: Double(start), preferredTimescale: 1000)
-        let endTime = CMTime(seconds: Double(end), preferredTimescale: 1000)
+        let startTime = CMTime(seconds: Double(self.startTime), preferredTimescale: 1000)
+        let endTime = CMTime(seconds: Double(self.endTime), preferredTimescale: 1000)
         let timeRange = CMTimeRange(start: startTime, end: endTime)
         exportSession.timeRange = timeRange
         
@@ -231,8 +230,7 @@ extension EditController {
             switch exportSession.status {
             case .completed:
                 print("outputurl \(outputURL)")
-                
-                self.speechTranscript(url: outputURL, start: start, end: end)
+                self.speechTranscript(url: outputURL)
             case .failed:
                 print("failed \(exportSession.error)")
                 
@@ -245,7 +243,7 @@ extension EditController {
         }
     }
     
-    func speechTranscript(url: URL, start: Float, end: Float) {
+    func speechTranscript(url: URL) {
         guard let recognizer = SFSpeechRecognizer() else {
             print("Recognizer not supported")
             return
@@ -266,7 +264,7 @@ extension EditController {
             if result.isFinal {
                 self.stringToShow = result.bestTranscription.formattedString
                 print(self.stringToShow)
-                self.trimAndComposition(start: start, end: end)
+                self.trimAndComposition()
                 
             }
         }}
