@@ -7,6 +7,9 @@
 //
 
 import UIKit
+import Firebase
+import StoreKit
+import CoreGraphics
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,12 +19,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         
+        FIRApp.configure()
+        
         window = UIWindow(frame: UIScreen.main.bounds)
         window?.makeKeyAndVisible()
         window?.rootViewController = UINavigationController(rootViewController: MainController())
         
         let navigationBarAppearance = UINavigationBar.appearance()
         navigationBarAppearance.isTranslucent = false
+        
+        GADMobileAds.configure(withApplicationID: "ca-app-pub-3940256099942544~1458002511")
         
         return true
     }

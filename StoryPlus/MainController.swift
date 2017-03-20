@@ -40,9 +40,11 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     func handleSelectVideo(){
         let picker = UIImagePickerController()
+        picker.sourceType = .camera
         picker.allowsEditing = true
         picker.delegate = self
         picker.mediaTypes = [kUTTypeMovie as String]
+        picker.videoQuality = .typeHigh
         
         self.present(picker, animated: true, completion: nil)
         
@@ -53,11 +55,11 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
         if let videoURL = info[UIImagePickerControllerMediaURL] as? URL {
             _ = NSData(contentsOf: videoURL)
             dismiss(animated: true, completion: {
-                let editController = EditController()
-                editController.videoThumbnail.image = self.thumbnailForVideoAtURL(url: videoURL)
-                editController.videoURL = videoURL
-                editController.title = "Options"
-                self.navigationController?.pushViewController(editController, animated: true)
+                let trimController = TrimController()
+                trimController.videoThumbnail.image = self.thumbnailForVideoAtURL(url: videoURL)
+                trimController.videoURL = videoURL
+                trimController.title = "Options"
+                self.navigationController?.pushViewController(trimController, animated: true)
             })
         }
     }

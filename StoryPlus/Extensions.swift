@@ -8,6 +8,7 @@
 
 import Foundation
 import AVFoundation
+import UIKit
 
 extension AVAsset {
     func writeAudioTrack(to url: URL, success: @escaping () -> (), failure: @escaping (Error) -> ()) {
@@ -53,4 +54,43 @@ extension AVAsset {
         
         return composition
     }
+}
+
+extension UIViewController {
+
+    func randomText(length: Int, justLowerCase: Bool) -> String {
+        var text = ""
+        for _ in 1...length {
+            var decValue = 0  // ascii decimal value of a character
+            var charType = 3  // default is lowercase
+            if justLowerCase == false {
+                // randomize the character type
+                charType =  Int(arc4random_uniform(4))
+            }
+            switch charType {
+            case 1:  // digit: random Int between 48 and 57
+                decValue = Int(arc4random_uniform(10)) + 48
+            case 2:  // uppercase letter
+                decValue = Int(arc4random_uniform(26)) + 65
+            case 3:  // lowercase letter
+                decValue = Int(arc4random_uniform(26)) + 97
+            default:  // space character
+                decValue = 32
+            }
+            // get ASCII character from random decimal value
+            let char = String(describing: UnicodeScalar(decValue))
+            text = text + char
+            // remove double spaces
+            text = text.replacingOccurrences(of: "  ", with: " ")
+        }
+        return text
+    }
+}
+
+extension UIColor {
+    
+    static func rgb (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) -> UIColor{
+        return UIColor(red: r/255, green: g/255, blue: b/255, alpha: a)
+    }
+    
 }
