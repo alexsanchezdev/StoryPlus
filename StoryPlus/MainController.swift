@@ -10,57 +10,106 @@ import UIKit
 import MobileCoreServices
 import AVFoundation
 import AssetsLibrary
+import Photos
+import SwiftSpinner
 
 class MainController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
-    lazy var mainButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Seleccionar archivo", for: .normal)
-        button.addTarget(self, action: #selector(handleSelectVideo), for: .touchUpInside)
-        return button
+    var isVideoRecording = false
+    
+    let mainView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
+    
+    lazy var recordImage: UIImageView = {
+        let image = UIImageView()
+        image.translatesAutoresizingMaskIntoConstraints = false
+        image.image = UIImage(named: "camera")
+        image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleRecordVideo)))
+        image.isUserInteractionEnabled = true
+        image.contentMode = UIViewContentMode.center
+        return image
+    }()
+    
+    lazy var importImage: UIImageView = {
+        let image = UIImageView()
+        image.translatesAutoresizingMaskIntoConstraints = false
+        image.image = UIImage(named: "folder")
+        image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleImportVideo)))
+        image.isUserInteractionEnabled = true
+        image.contentMode = UIViewContentMode.center
+        return image
+    }()
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        isVideoRecording = false
+    }
+    
     
     func setupViews(){
         view.backgroundColor = UIColor.white
         
-        view.addSubview(mainButton)
-        mainButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        mainButton.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
-        mainButton.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -40).isActive = true
-        mainButton.heightAnchor.constraint(equalTo: view.widthAnchor, multiplier: 72).isActive = true
+        view.addSubview(mainView)
+        mainView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        mainView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
+        mainView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        mainView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        
+        mainView.addSubview(recordImage)
+        recordImage.leftAnchor.constraint(equalTo: mainView.leftAnchor).isActive = true
+        recordImage.topAnchor.constraint(equalTo: mainView.topAnchor).isActive = true
+        recordImage.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
+        recordImage.bottomAnchor.constraint(equalTo: mainView.centerYAnchor).isActive = true
+        
+        mainView.addSubview(importImage)
+        importImage.leftAnchor.constraint(equalTo: mainView.leftAnchor).isActive = true
+        importImage.topAnchor.constraint(equalTo: mainView.centerYAnchor).isActive = true
+        importImage.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
+        importImage.bottomAnchor.constraint(equalTo: mainView.bottomAnchor).isActive = true
         
     }
     
-    func handleSelectVideo(){
+    func handleImportVideo(){
+        let picker = UIImagePickerController()
+        picker.sourceType = .photoLibrary
+        picker.allowsEditing = true
+        picker.delegate = self
+        picker.mediaTypes = [kUTTypeMovie as String]
+        
+        self.present(picker, animated: true, completion: nil)
+    }
+    
+    func handleRecordVideo(){
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.allowsEditing = true
         picker.delegate = self
         picker.mediaTypes = [kUTTypeMovie as String]
         picker.videoQuality = .typeHigh
+        picker.cameraDevice = .front
         
         self.present(picker, animated: true, completion: nil)
-        
-        
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         if let videoURL = info[UIImagePickerControllerMediaURL] as? URL {
             _ = NSData(contentsOf: videoURL)
-            dismiss(animated: true, completion: {
-                let trimController = TrimController()
-                trimController.videoThumbnail.image = self.thumbnailForVideoAtURL(url: videoURL)
-                trimController.videoURL = videoURL
-                trimController.title = "Options"
-                self.navigationController?.pushViewController(trimController, animated: true)
-            })
+                self.dismiss(animated: true, completion: {
+                    let trimController = TrimController()
+                    trimController.videoThumbnail.image = self.thumbnailForVideoAtURL(url: videoURL)
+                    trimController.videoURL = videoURL
+                    trimController.title = "Options"
+                    self.navigationController?.pushViewController(trimController, animated: true)
+                })
         }
     }
     
@@ -82,6 +131,5 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
             return nil
         }
     }
-
 }
 

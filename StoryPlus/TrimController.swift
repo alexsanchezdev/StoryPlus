@@ -8,14 +8,17 @@
 
 import UIKit
 import GoogleMobileAds
-import UnityAds
 import SwiftSpinner
 import AVFoundation
 import Photos
+import Firebase
 
 let kBannerAdUnitID = "ca-app-pub-7788951705227269/3470372435"
+let kInterstitialAdUnitID = "ca-app-pub-7788951705227269/8384923233"
 
-class TrimController: UIViewController, UnityAdsDelegate{
+class TrimController: UIViewController, GADInterstitialDelegate{
+    
+    var interstitial: GADInterstitial!
 
     var videoURL: URL?
     var trimDuration: Float?
@@ -23,6 +26,9 @@ class TrimController: UIViewController, UnityAdsDelegate{
     var startTime: Float = 0
     var endTime: Float = 0
     var timer: Timer!
+    var currentVideo: Float = 1.0
+    var numberOfVideos: Float = 0.0
+    var progress: Double = 0.0
     
     
     let videoThumbnail: UIImageView = {
@@ -53,16 +59,13 @@ class TrimController: UIViewController, UnityAdsDelegate{
         self.bannerView.adUnitID = kBannerAdUnitID
         self.bannerView.rootViewController = self
         self.bannerView.load(GADRequest())
-    
-        UnityAds.initialize("1352658", delegate: self, testMode: false)
         
-        SwiftSpinner.sharedInstance.outerColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)
-        SwiftSpinner.sharedInstance.innerColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 0.5)
-        timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false, block: { (timer) in
-            SwiftSpinner.hide({ 
-                _ = self.navigationController?.popViewController(animated: true)
-            })
-            
+        self.interstitial = createAndLoadInterstitial()
+    
+        //UnityAds.initialize("1352658", delegate: self, testMode: true)
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false, block: { (timer) in
+            SwiftSpinner.hide()
         })
         SwiftSpinner.show("Analyzing...")
         setupViews()
@@ -98,16 +101,16 @@ class TrimController: UIViewController, UnityAdsDelegate{
     }
     
     func handleAutoTrim(){
-        SwiftSpinner.show(duration: 3.0, title: "Loading ads...").addTapHandler({
-        }, subtitle: "Video will be edited when it finish")
-        Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { (timer) in
-            UnityAds.show(self, placementId: "rewardedVideo")
+        
+        if interstitial.isReady {
+            self.interstitial.present(fromRootViewController: self)
+        } else {
+            detectAssetLenght()
         }
+        
     }
     
     func detectAssetLenght(){
-        
-        SwiftSpinner.show("Exporting...")
         // Get video url and trim/parts duration from previous controller
         guard let url = videoURL else { return }
         guard let duration = trimDuration else { return }
@@ -117,6 +120,10 @@ class TrimController: UIViewController, UnityAdsDelegate{
         self.assetDuration = Float(asset.duration.value) / Float(asset.duration.timescale)
         
         if let length = self.assetDuration {
+            self.numberOfVideos = length / duration
+            if (length.truncatingRemainder(dividingBy: duration)) > 0 {
+                self.numberOfVideos += 1
+            }
             // Detect if trim duration is longer than asset duration or not
             if duration > length {
                 self.endTime = length
@@ -125,12 +132,13 @@ class TrimController: UIViewController, UnityAdsDelegate{
             }
         }
         
+        
+        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.timerFire), userInfo: nil, repeats: true)
         createComposition(asset: asset)
         
     }
     
     func createComposition(asset: AVAsset){
-        
         // Create composition for video and audio mix and orientation fix
         let mixComposition = AVMutableComposition()
         
@@ -199,6 +207,7 @@ class TrimController: UIViewController, UnityAdsDelegate{
                         switch exportSession.status {
                         case .completed:
                             completion(outputURL)
+                            print("Trimed video")
                         case .failed:
                             print("failed \(exportSession.error)")
                         case .cancelled:
@@ -228,16 +237,13 @@ class TrimController: UIViewController, UnityAdsDelegate{
                         if let trim = self.trimDuration {
                             self.startTime = self.startTime + trim
                             self.endTime = self.endTime + trim
+                            self.currentVideo += 1.0
+                            self.progress = Double(self.currentVideo / self.numberOfVideos)
+                            print("Progress is: \(self.progress)")
                             self.createComposition(asset: asset)
                         }
                     } else {
-                        SwiftSpinner.hide({ 
-                            SwiftSpinner.sharedInstance.outerColor = UIColor.rgb(r: 76, g: 217, b: 100, a: 1)
-                            SwiftSpinner.sharedInstance.innerColor = UIColor.rgb(r: 76, g: 217, b: 100, a: 0.5)
-                            SwiftSpinner.show("Exported.", animated: false).addTapHandler({
-                                SwiftSpinner.hide()
-                            }, subtitle: "Tap to close")
-                        })
+                        self.progress = 1.0
                     }
                 }
             }
@@ -260,34 +266,67 @@ class TrimController: UIViewController, UnityAdsDelegate{
         present(optionsMenu, animated: true, completion: nil)
     }
     
-    func unityAdsReady(_ placementId: String) {
-        SwiftSpinner.hide()
-        timer.invalidate()
-    }
+//    func unityAdsReady(_ placementId: String) {
+//        SwiftSpinner.hide()
+//        timer.invalidate()
+//    }
+//    
+//    func unityAdsDidStart(_ placementId: String) {
+//        
+//    }
+//    
+//    func unityAdsDidError(_ error: UnityAdsError, withMessage message: String) {
+//        SwiftSpinner.show("Analysis error").addTapHandler({
+//            SwiftSpinner.hide()
+//        }, subtitle: "Try again")
+//    }
+//    
+//    func unityAdsDidFinish(_ placementId: String, with state: UnityAdsFinishState) {
+//        if state == .completed {
+//            print("Ads completed")
+//            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false, block: { (timer) in
+//                self.detectAssetLenght()
+//            })
+//            
+//        } else if state == .skipped {
+//            print("Ads skipped")
+//            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false, block: { (timer) in
+//                self.detectAssetLenght()
+//            })
+//        } else if state == .error {
+//            print("Ads error")
+//        }
+//        
+//    }
     
-    func unityAdsDidStart(_ placementId: String) {
-        
-    }
-    
-    func unityAdsDidError(_ error: UnityAdsError, withMessage message: String) {
-        SwiftSpinner.show("Analysis error").addTapHandler({
-            SwiftSpinner.hide()
-        }, subtitle: "Try again")
-    }
-    
-    func unityAdsDidFinish(_ placementId: String, with state: UnityAdsFinishState) {
-        if state == .completed {
-            print("Ads completed")
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false, block: { (timer) in
-                self.detectAssetLenght()
-            })
-            
-        } else if state == .skipped {
-            print("Ads skipped")
-        } else if state == .error {
-            print("Ads error")
+    func timerFire(_ timer: Timer) {
+        SwiftSpinner.show(progress: progress, title: "Exporting... \(Int(progress*100))%")
+        if progress >= 1.0 {
+            timer.invalidate()
+            SwiftSpinner.show(duration: 2.0, title: "Done!", animated: false)
+            self.numberOfVideos = 0.0
+            self.currentVideo = 0.0
+            self.endTime = 0.0
+            self.startTime = 0.0
+            self.progress = 0.0
         }
-        
+    }
+    
+    func createAndLoadInterstitial() -> GADInterstitial {
+        let interstitial =
+            GADInterstitial(adUnitID: kInterstitialAdUnitID)
+        interstitial.delegate = self
+        interstitial.load(GADRequest())
+        return interstitial
+    }
+    
+    func interstitialDidReceiveAd(_ ad: GADInterstitial) {
+        timer.invalidate()
+        SwiftSpinner.hide()
+    }
+    
+    func interstitialDidDismissScreen(_ ad: GADInterstitial) {
+        detectAssetLenght()
     }
     
 }
