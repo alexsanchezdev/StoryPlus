@@ -22,10 +22,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FIRApp.configure()
         
         window = UIWindow(frame: UIScreen.main.bounds)
+        window?.backgroundColor = UIColor.rgb(r: 250, g: 250, b: 250, a: 1)
         window?.makeKeyAndVisible()
         window?.rootViewController = UINavigationController(rootViewController: MainController())
         
         let navigationBarAppearance = UINavigationBar.appearance()
+        navigationBarAppearance.tintColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)
+        navigationBarAppearance.barTintColor = UIColor.rgb(r: 250, g: 250, b: 250, a: 1)
         navigationBarAppearance.isTranslucent = false
         
         GADMobileAds.configure(withApplicationID: "ca-app-pub-3940256099942544~1458002511")
@@ -53,6 +56,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+        clearTmpDirectory()
+    }
+    
+    func clearTmpDirectory(){
+        
+        let manager = FileManager.default
+        
+        if let documentDirectory = try? manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true) {
+            let url = documentDirectory.appendingPathComponent("videos")
+            
+            do {
+                try manager.removeItem(at: url)
+                let tmp = try manager.contentsOfDirectory(at: manager.temporaryDirectory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
+                for file in tmp {
+                    try manager.removeItem(at: file)
+                }
+            }
+            catch let error as NSError {
+                print("Ooops! Something went wrong: \(error)")
+            }
+            
+        }
+        
+        
     }
 
 

@@ -13,6 +13,8 @@ import AssetsLibrary
 import Photos
 import SwiftSpinner
 
+
+
 class MainController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var isVideoRecording = false
@@ -27,8 +29,10 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
         let image = UIImageView()
         image.translatesAutoresizingMaskIntoConstraints = false
         image.image = UIImage(named: "camera")
+        image.tintColor = UIColor.white
         image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleRecordVideo)))
         image.isUserInteractionEnabled = true
+        image.backgroundColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)
         image.contentMode = UIViewContentMode.center
         return image
     }()
@@ -37,24 +41,35 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
         let image = UIImageView()
         image.translatesAutoresizingMaskIntoConstraints = false
         image.image = UIImage(named: "folder")
+        image.tintColor = UIColor.white
+        image.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)
         image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleImportVideo)))
         image.isUserInteractionEnabled = true
         image.contentMode = UIViewContentMode.center
         return image
     }()
     
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.setNeedsStatusBarAppearanceUpdate()
+        
+        navigationController?.navigationBar.isHidden = true
+        
         setupViews()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        isVideoRecording = false
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        importImage.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)
+        recordImage.backgroundColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)
+        navigationController?.navigationBar.isHidden = true
     }
-    
-    
+
     func setupViews(){
         view.backgroundColor = UIColor.white
         
@@ -76,19 +91,24 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
         importImage.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
         importImage.bottomAnchor.constraint(equalTo: mainView.bottomAnchor).isActive = true
         
+        
+        
     }
     
     func handleImportVideo(){
+        recordImage.backgroundColor = UIColor.white
         let picker = UIImagePickerController()
         picker.sourceType = .photoLibrary
         picker.allowsEditing = true
         picker.delegate = self
         picker.mediaTypes = [kUTTypeMovie as String]
         
+        isVideoRecording = false
         self.present(picker, animated: true, completion: nil)
     }
     
     func handleRecordVideo(){
+        importImage.backgroundColor = UIColor.white
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.allowsEditing = true
@@ -96,7 +116,7 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
         picker.mediaTypes = [kUTTypeMovie as String]
         picker.videoQuality = .typeHigh
         picker.cameraDevice = .front
-        
+        isVideoRecording = true
         self.present(picker, animated: true, completion: nil)
     }
     
@@ -107,6 +127,7 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
                     let trimController = TrimController()
                     trimController.videoThumbnail.image = self.thumbnailForVideoAtURL(url: videoURL)
                     trimController.videoURL = videoURL
+                    trimController.isVideoRecording = self.isVideoRecording
                     trimController.title = "Options"
                     self.navigationController?.pushViewController(trimController, animated: true)
                 })
