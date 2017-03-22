@@ -302,11 +302,11 @@ extension TrimController {
         guard let duration = trimDuration else { return }
         SwiftSpinner.show(progress: progress, title: "Trimming... \(Int(progress*100))%")
         if progress >= 0.5 {
+            self.endTime = duration
+            self.startTime = 0.0
             timer.invalidate()
             recognizeFile()
             Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.listenForEnd), userInfo: nil, repeats: true)
-            self.endTime = duration
-            self.startTime = 0.0
         }
     }
     
@@ -432,6 +432,26 @@ extension TrimController {
             }
             if result.isFinal {
                 self.transcriptionsString.append(result.bestTranscription.formattedString)
+                
+                var segmentDuration = 5.0
+                var timeArrays: [TimeInterval] = []
+//                for segment in result.bestTranscription.segments {
+//                    if segment.timestamp < segmentDuration {
+//                        timeArrays.append(segment.timestamp)
+//                    } else {
+//                        if self.endTime > Float(segmentDuration) {
+//                            self.transcriptionsTimestamp.append(timeArrays)
+//                            timeArrays.removeAll()
+//                            segmentDuration = segmentDuration + 5.0
+//                            print("Segment incremented")
+//                        } else {
+//                            self.transcriptionsTimestamp.append(timeArrays)
+//                        }
+//                    }
+//                    print(self.transcriptionsTimestamp)
+//                }
+                print(result.bestTranscription.segments)
+                print("#############################################################")
                 if let length = self.assetDuration {
                     if self.endTime < length {
                         if let trim = self.trimDuration {

@@ -33,6 +33,7 @@ class TrimController: UIViewController, GADInterstitialDelegate{
     var isSaved = false
     var videoURLs = [URL]()
     var transcriptionsString = [String]()
+    var transcriptionsTimestamp: [[TimeInterval]] = Array(repeating: [TimeInterval](), count: 1)
     var type = String()
     
     
