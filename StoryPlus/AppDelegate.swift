@@ -56,10 +56,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-        clearTmpDirectory()
+        clearTemporaryDirectory()
     }
     
-    func clearTmpDirectory(){
+    func clearTemporaryDirectory(){
+        let manager = FileManager.default
+        
+        if let tmp = try? manager.contentsOfDirectory(at: manager.temporaryDirectory, includingPropertiesForKeys: nil, options: []) {
+            do {
+                for file in tmp {
+                    try manager.removeItem(at: file)
+                }
+            } catch let error as NSError {
+                print("Ooops! Something went wrong: \(error)")
+            }
+        }
+        
+        clearDocumentDirectory()
+        
+    }
+    
+    func clearDocumentDirectory(){
         
         let manager = FileManager.default
         
@@ -78,7 +95,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
             
         }
-        
         
     }
 
