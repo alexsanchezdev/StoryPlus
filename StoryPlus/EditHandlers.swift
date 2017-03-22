@@ -207,11 +207,11 @@ extension EditController {
         let manager = FileManager.default
         guard let documentDirectory = try? manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true) else {return}
         
-        var outputURL = documentDirectory.appendingPathComponent("StoryPlus")
+        var outputURL = documentDirectory.appendingPathComponent("transcriptions")
         
         do {
             try manager.createDirectory(at: outputURL, withIntermediateDirectories: true, attributes: nil)
-            outputURL = outputURL.appendingPathComponent("transcript.mp4")
+            outputURL = outputURL.appendingPathComponent("\(UUID().uuidString).mp4")
         } catch let error {
             print(error)
         }
