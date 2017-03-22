@@ -299,11 +299,13 @@ extension TrimController {
     
     func createURLFire(_ timer: Timer) {
         
+        guard let duration = trimDuration else { return }
         SwiftSpinner.show(progress: progress, title: "Trimming... \(Int(progress*100))%")
         if progress >= 0.5 {
             timer.invalidate()
+            recognizeFile()
             Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.listenForEnd), userInfo: nil, repeats: true)
-            self.endTime = 0.0
+            self.endTime = duration
             self.startTime = 0.0
         }
     }
@@ -363,26 +365,34 @@ extension TrimController {
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else { return }
         exportSession.outputURL = outputURL
         exportSession.outputFileType = AVFileTypeAppleM4A
-        let startTime = CMTime(seconds: Double(self.startTime), preferredTimescale: 1000)
-        let endTime = CMTime(seconds: Double(self.endTime), preferredTimescale: 1000)
-        let timeRange = CMTimeRange(start: startTime, end: endTime)
-        exportSession.timeRange = timeRange
         
-        exportSession.exportAsynchronously{
-            switch exportSession.status {
-            case .completed:
-                print("outputurl \(outputURL)")
-                self.speechTranscript(url: outputURL)
-            case .failed:
-                print("failed \(exportSession.error)")
-                
-            case .cancelled:
-                print("cancelled \(exportSession.error)")
-                
-            default: break
-                
+        if let length = self.assetDuration {
+            if self.endTime > length {
+                self.endTime = length
+            }
+            
+            let startTime = CMTime(seconds: Double(self.startTime), preferredTimescale: 1000)
+            let endTime = CMTime(seconds: Double(self.endTime), preferredTimescale: 1000)
+            let timeRange = CMTimeRange(start: startTime, end: endTime)
+            exportSession.timeRange = timeRange
+            
+            exportSession.exportAsynchronously{
+                switch exportSession.status {
+                case .completed:
+                    print("outputurl \(outputURL)")
+                    self.speechTranscript(url: outputURL)
+                case .failed:
+                    print("failed \(exportSession.error)")
+                    
+                case .cancelled:
+                    print("cancelled \(exportSession.error)")
+                    
+                default: break
+                    
+                }
             }
         }
+        
     }
     
     func speechTranscript(url: URL) {
