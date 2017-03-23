@@ -9,10 +9,11 @@
 import UIKit
 import AVFoundation
 import AVKit
+import Speech
 
 class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     
-    var languageCode = String()
+    var languageCode = ""
     let reuseIdentifier = "cell"
     var thumbnails: [UIImage]?
     var videoURLs: [URL]?
@@ -132,6 +133,102 @@ class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout
         self.present(playerViewController, animated: true) {
             playerViewController.player!.play()
         }
+    }
+    
+//    func recognizeFile() {
+//        guard let video = videoURL else { return }
+//        let asset = AVAsset(url: video)
+//        let manager = FileManager.default
+//        guard let documentDirectory = try? manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true) else {return}
+//        
+//        var outputURL = documentDirectory.appendingPathComponent("transcriptions")
+//        
+//        do {
+//            try manager.createDirectory(at: outputURL, withIntermediateDirectories: true, attributes: nil)
+//            outputURL = outputURL.appendingPathComponent("\(UUID().uuidString).mp4")
+//        } catch let error {
+//            print(error)
+//        }
+//        
+//        _ = try? manager.removeItem(at: outputURL)
+//        
+//        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else { return }
+//        exportSession.outputURL = outputURL
+//        exportSession.outputFileType = AVFileTypeAppleM4A
+//        
+//        if let length = self.assetDuration {
+//            if self.endTime > length {
+//                self.endTime = length
+//            }
+//            
+//            let startTime = CMTime(seconds: Double(self.startTime), preferredTimescale: 1000)
+//            let endTime = CMTime(seconds: Double(self.endTime), preferredTimescale: 1000)
+//            let timeRange = CMTimeRange(start: startTime, end: endTime)
+//            exportSession.timeRange = timeRange
+//            
+//            exportSession.exportAsynchronously{
+//                switch exportSession.status {
+//                case .completed:
+//                    print("outputurl \(outputURL)")
+//                    self.speechTranscript(url: outputURL)
+//                case .failed:
+//                    print("failed \(exportSession.error)")
+//                    
+//                case .cancelled:
+//                    print("cancelled \(exportSession.error)")
+//                    
+//                default: break
+//                    
+//                }
+//            }
+//        }
+//        
+//    }
+    
+    func speechTranscript(url: URL) {
+        if languageCode == "" {
+            if let recognizer = SFSpeechRecognizer() {
+                if !recognizer.isAvailable {
+                    print("Recognizer not available")
+                    return
+                }
+                
+                let request = SFSpeechURLRecognitionRequest(url: url)
+                recognizer.recognitionTask(with: request) { (result, error) in
+                    
+                    guard let result = result else {
+                        // Recognition failed, so check error for details and handle it
+                        print("Recognition failed")
+                        return
+                    }
+                    if result.isFinal {
+                        print(result.bestTranscription.formattedString)
+                    }
+                }
+            }
+        } else {
+            let locale = Locale(identifier: languageCode)
+            if let recognizer = SFSpeechRecognizer(locale: locale) {
+                if !recognizer.isAvailable {
+                    print("Recognizer not available")
+                    return
+                }
+                
+                let request = SFSpeechURLRecognitionRequest(url: url)
+                recognizer.recognitionTask(with: request) { (result, error) in
+                    
+                    guard let result = result else {
+                        // Recognition failed, so check error for details and handle it
+                        print("Recognition failed")
+                        return
+                    }
+                    if result.isFinal {
+                        print(result.bestTranscription.formattedString)
+                    }
+                }
+            }
+        }
+        
     }
     
 
