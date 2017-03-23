@@ -26,6 +26,7 @@ extension TrimController {
     }
     
     func handleTranscript(){
+        thumbnails.removeAll()
         type = "transcript"
         videoURLs = []
         if interstitial.isReady {
@@ -169,7 +170,8 @@ extension TrimController {
         guard let url = videoURL else { return }
         let asset = AVAsset(url: url)
         
-        videoURLs.append(url)
+        thumbnailForVideoAtURL(url: mediaURL)
+        videoURLs.append(mediaURL)
         print("Video urls count is: \(videoURLs.count)")
         
         if let length = self.assetDuration {
@@ -178,12 +180,12 @@ extension TrimController {
                     self.startTime = self.startTime + trim
                     self.endTime = self.endTime + trim
                     self.currentVideo += 1.0
-                    self.progress = Double(self.currentVideo / (self.numberOfVideos * 2))
+                    self.progress = Double(self.currentVideo / self.numberOfVideos)
                     print("Progress is: \(self.progress)")
                     self.createComposition(asset: asset)
                 }
             } else {
-                self.progress = 0.5
+                self.progress = 1.0
             }
         }
         
@@ -299,14 +301,19 @@ extension TrimController {
     
     func createURLFire(_ timer: Timer) {
         
-        guard let duration = trimDuration else { return }
+        //guard let duration = trimDuration else { return }
         SwiftSpinner.show(progress: progress, title: "Trimming... \(Int(progress*100))%")
-        if progress >= 0.5 {
-            self.endTime = duration
-            self.startTime = 0.0
+        if progress >= 1.0 {
             timer.invalidate()
-            recognizeFile()
-            Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.listenForEnd), userInfo: nil, repeats: true)
+            SwiftSpinner.hide()
+            self.numberOfVideos = 0.0
+            self.currentVideo = 1.0
+            self.endTime = 0.0
+            self.startTime = 0.0
+            self.progress = 0.0
+            showTranscriptController()
+            //recognizeFile()
+            //Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.listenForEnd), userInfo: nil, repeats: true)
         }
     }
     
@@ -433,8 +440,8 @@ extension TrimController {
             if result.isFinal {
                 self.transcriptionsString.append(result.bestTranscription.formattedString)
                 
-                var segmentDuration = 5.0
-                var timeArrays: [TimeInterval] = []
+                //var segmentDuration = 5.0
+                //var timeArrays: [TimeInterval] = []
 //                for segment in result.bestTranscription.segments {
 //                    if segment.timestamp < segmentDuration {
 //                        timeArrays.append(segment.timestamp)
@@ -467,5 +474,35 @@ extension TrimController {
                     }
                 }
             }
-        }}
+        }
+    }
+    
+    private func thumbnailForVideoAtURL(url: URL){
+        
+        let asset = AVAsset(url: url)
+        let assetImageGenerator = AVAssetImageGenerator(asset: asset)
+        assetImageGenerator.appliesPreferredTrackTransform = true
+        
+        var time = asset.duration
+        time.value = min(time.value, 2)
+        
+        do {
+            let imageRef = try assetImageGenerator.copyCGImage(at: time, actualTime: nil)
+            thumbnails.append(UIImage(cgImage: imageRef))
+            
+        } catch {
+            print("error")
+        }
+    }
+    
+    func showTranscriptController(){
+        let transcriptController = TranscriptController()
+        print(thumbnails)
+        transcriptController.thumbnails = thumbnails
+        transcriptController.videoURLs = videoURLs
+        transcriptController.title = "Videos"
+        self.navigationController?.pushViewController(transcriptController, animated: true)
+        
+    
+    }
 }

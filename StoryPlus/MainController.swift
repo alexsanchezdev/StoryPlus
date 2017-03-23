@@ -19,34 +19,91 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     var isVideoRecording = false
     
+    lazy var deleteAds: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("DELETE ADS & SUPPORT DEVELOPER", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: UIFontWeightBold)
+        //button.addTarget(self, action: #selector(trimOptions), for: .touchUpInside)
+        button.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)//rgb(52, 152, 219)
+        button.setTitleColor(UIColor.white, for: .normal)
+        return button
+    }()
+    
     let mainView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
-    lazy var recordImage: UIImageView = {
+    lazy var recordView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)
+        view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleRecordVideo)))
+        view.isUserInteractionEnabled = true
+        return view
+    }()
+    
+    lazy var importView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor.rgb(r: 88, g: 86, b: 214, a: 1)
+        view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleImportVideo)))
+        view.isUserInteractionEnabled = true
+        return view
+    }()
+    
+    let recordImage: UIImageView = {
         let image = UIImageView()
         image.translatesAutoresizingMaskIntoConstraints = false
         image.image = UIImage(named: "camera")
         image.tintColor = UIColor.white
-        image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleRecordVideo)))
-        image.isUserInteractionEnabled = true
-        image.backgroundColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)
-        image.contentMode = UIViewContentMode.center
+        image.contentMode = .scaleAspectFit
         return image
     }()
     
-    lazy var importImage: UIImageView = {
+    let importImage: UIImageView = {
         let image = UIImageView()
         image.translatesAutoresizingMaskIntoConstraints = false
         image.image = UIImage(named: "folder")
         image.tintColor = UIColor.white
-        image.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)
-        image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleImportVideo)))
-        image.isUserInteractionEnabled = true
-        image.contentMode = UIViewContentMode.center
+        image.contentMode = .scaleAspectFit
         return image
+    }()
+    
+    let recordLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "RECORD"
+        label.font = UIFont.systemFont(ofSize: 28, weight: UIFontWeightBold)
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        return label
+    }()
+    
+    let importLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "IMPORT"
+        label.font = UIFont.systemFont(ofSize: 28, weight: UIFontWeightBold)
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        return label
+    }()
+    
+    let recordActivity: UIActivityIndicatorView = {
+        let activity = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+        activity.translatesAutoresizingMaskIntoConstraints = false
+        activity.hidesWhenStopped = true
+        return activity
+    }()
+    
+    let importActivity: UIActivityIndicatorView = {
+        let activity = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+        activity.translatesAutoresizingMaskIntoConstraints = false
+        activity.hidesWhenStopped = true
+        return activity
     }()
     
     
@@ -56,47 +113,82 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.setNeedsStatusBarAppearanceUpdate()
-        
-        navigationController?.navigationBar.isHidden = true
         
         setupViews()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        importImage.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)
-        recordImage.backgroundColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)
-        navigationController?.navigationBar.isHidden = true
+        recordImage.isHidden = false
+        recordActivity.stopAnimating()
+        importImage.isHidden = false
+        importActivity.stopAnimating()
     }
 
     func setupViews(){
         view.backgroundColor = UIColor.white
         
+        view.addSubview(deleteAds)
+        deleteAds.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        deleteAds.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        deleteAds.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        deleteAds.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        
         view.addSubview(mainView)
-        mainView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        mainView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
-        mainView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        mainView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        mainView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        mainView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        mainView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        mainView.bottomAnchor.constraint(equalTo: deleteAds.topAnchor).isActive = true
+
+        mainView.addSubview(recordView)
+        recordView.leftAnchor.constraint(equalTo: mainView.leftAnchor).isActive = true
+        recordView.topAnchor.constraint(equalTo: mainView.topAnchor).isActive = true
+        recordView.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
+        recordView.bottomAnchor.constraint(equalTo: mainView.centerYAnchor).isActive = true
         
-        mainView.addSubview(recordImage)
-        recordImage.leftAnchor.constraint(equalTo: mainView.leftAnchor).isActive = true
-        recordImage.topAnchor.constraint(equalTo: mainView.topAnchor).isActive = true
-        recordImage.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
-        recordImage.bottomAnchor.constraint(equalTo: mainView.centerYAnchor).isActive = true
+        mainView.addSubview(importView)
+        importView.leftAnchor.constraint(equalTo: mainView.leftAnchor).isActive = true
+        importView.topAnchor.constraint(equalTo: mainView.centerYAnchor).isActive = true
+        importView.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
+        importView.bottomAnchor.constraint(equalTo: mainView.bottomAnchor).isActive = true
         
-        mainView.addSubview(importImage)
-        importImage.leftAnchor.constraint(equalTo: mainView.leftAnchor).isActive = true
-        importImage.topAnchor.constraint(equalTo: mainView.centerYAnchor).isActive = true
-        importImage.rightAnchor.constraint(equalTo: mainView.rightAnchor).isActive = true
-        importImage.bottomAnchor.constraint(equalTo: mainView.bottomAnchor).isActive = true
+        recordView.addSubview(recordImage)
+        recordImage.centerXAnchor.constraint(equalTo: recordView.centerXAnchor).isActive = true
+        recordImage.centerYAnchor.constraint(equalTo: recordView.centerYAnchor, constant: -20).isActive = true
+        recordImage.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        recordImage.heightAnchor.constraint(equalToConstant: 100).isActive = true
         
+        importView.addSubview(importImage)
+        importImage.centerXAnchor.constraint(equalTo: importView.centerXAnchor).isActive = true
+        importImage.centerYAnchor.constraint(equalTo: importView.centerYAnchor, constant: -20).isActive = true
+        importImage.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        importImage.heightAnchor.constraint(equalToConstant: 100).isActive = true
         
+        recordView.addSubview(recordLabel)
+        recordLabel.topAnchor.constraint(equalTo: recordImage.bottomAnchor, constant: 20).isActive = true
+        recordLabel.centerXAnchor.constraint(equalTo: mainView.centerXAnchor).isActive = true
+        recordLabel.widthAnchor.constraint(equalTo: mainView.widthAnchor).isActive = true
+        recordLabel.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        
+        importView.addSubview(importLabel)
+        importLabel.topAnchor.constraint(equalTo: importImage.bottomAnchor, constant: 20).isActive = true
+        importLabel.centerXAnchor.constraint(equalTo: mainView.centerXAnchor).isActive = true
+        importLabel.widthAnchor.constraint(equalTo: mainView.widthAnchor).isActive = true
+        importLabel.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        
+        recordView.addSubview(recordActivity)
+        recordActivity.centerXAnchor.constraint(equalTo: recordImage.centerXAnchor).isActive = true
+        recordActivity.centerYAnchor.constraint(equalTo: recordImage.centerYAnchor).isActive = true
+        
+        importView.addSubview(importActivity)
+        importActivity.centerXAnchor.constraint(equalTo: importImage.centerXAnchor).isActive = true
+        importActivity.centerYAnchor.constraint(equalTo: importImage.centerYAnchor).isActive = true
         
     }
     
     func handleImportVideo(){
-        recordImage.backgroundColor = UIColor.white
+        importImage.isHidden = true
+        importActivity.startAnimating()
         let picker = UIImagePickerController()
         picker.sourceType = .photoLibrary
         picker.allowsEditing = true
@@ -108,7 +200,8 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     func handleRecordVideo(){
-        importImage.backgroundColor = UIColor.white
+        recordImage.isHidden = true
+        recordActivity.startAnimating()
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.allowsEditing = true
@@ -122,14 +215,15 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         if let videoURL = info[UIImagePickerControllerMediaURL] as? URL {
-            _ = NSData(contentsOf: videoURL)
+            //_ = NSData(contentsOf: videoURL)
                 self.dismiss(animated: true, completion: {
                     let trimController = TrimController()
                     trimController.videoThumbnail.image = self.thumbnailForVideoAtURL(url: videoURL)
                     trimController.videoURL = videoURL
                     trimController.isVideoRecording = self.isVideoRecording
                     trimController.title = "Options"
-                    self.navigationController?.pushViewController(trimController, animated: true)
+                    let navigation = UINavigationController(rootViewController: trimController)
+                    self.present(navigation, animated: true, completion: nil)
                 })
         }
     }
@@ -151,6 +245,10 @@ class MainController: UIViewController, UIImagePickerControllerDelegate, UINavig
             print("error")
             return nil
         }
+    }
+    
+    func showBuyController(){
+    
     }
 }
 

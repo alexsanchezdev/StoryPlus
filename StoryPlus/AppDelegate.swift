@@ -22,9 +22,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FIRApp.configure()
         
         window = UIWindow(frame: UIScreen.main.bounds)
-        window?.backgroundColor = UIColor.rgb(r: 250, g: 250, b: 250, a: 1)
+        //window?.backgroundColor = UIColor.rgb(r: 250, g: 250, b: 250, a: 1)
         window?.makeKeyAndVisible()
-        window?.rootViewController = UINavigationController(rootViewController: MainController())
+        window?.rootViewController = MainController()
         
         let navigationBarAppearance = UINavigationBar.appearance()
         navigationBarAppearance.tintColor = UIColor.rgb(r: 255, g: 45, b: 85, a: 1)

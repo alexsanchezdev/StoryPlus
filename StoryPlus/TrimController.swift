@@ -35,6 +35,7 @@ class TrimController: UIViewController, GADInterstitialDelegate{
     var transcriptionsString = [String]()
     var transcriptionsTimestamp: [[TimeInterval]] = Array(repeating: [TimeInterval](), count: 1)
     var type = String()
+    var thumbnails = [UIImage]()
     
     
     let bannerView: GADBannerView = {
@@ -53,18 +54,13 @@ class TrimController: UIViewController, GADInterstitialDelegate{
         return image
     }()
     
-    let optionsPlaceholder: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
     lazy var trimButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("AUTOTRIM VIDEO AND EXPORT", for: .normal)
+        button.setTitle("AUTOTRIM & EXPORT", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: UIFontWeightBold)
         button.addTarget(self, action: #selector(trimOptions), for: .touchUpInside)
-        button.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)//rgb(52, 152, 219)
+        button.backgroundColor = UIColor.rgb(r: 245, g: 45, b: 85, a: 1)
         button.setTitleColor(UIColor.white, for: .normal)
         return button
     }()
@@ -72,7 +68,8 @@ class TrimController: UIViewController, GADInterstitialDelegate{
     lazy var transcriptButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("AUTOTRIM VIDEO AND TRANSCRIPT", for: .normal)
+        button.setTitle("AUTOTRIM & TRANSCRIPT", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: UIFontWeightBold)
         button.addTarget(self, action: #selector(transcriptOptions), for: .touchUpInside)
         button.backgroundColor = UIColor.rgb(r: 88, g: 86, b: 214, a: 1)//rgb(46, 204, 113)
         button.setTitleColor(UIColor.white, for: .normal)
@@ -82,9 +79,10 @@ class TrimController: UIViewController, GADInterstitialDelegate{
     lazy var translateButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("AUTOTRIM VIDEO AND TRANSLATE", for: .normal)
+        button.setTitle("AUTOTRIM & TRANSLATE", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: UIFontWeightBold)
         button.addTarget(self, action: #selector(transcriptOptions), for: .touchUpInside)
-        button.backgroundColor = UIColor.rgb(r: 245, g: 45, b: 85, a: 1)//rgb(155, 89, 182)
+        button.backgroundColor = UIColor.rgb(r: 0, g: 122, b: 255, a: 1)//rgb(155, 89, 182)
         button.setTitleColor(UIColor.white, for: .normal)
         return button
     }()
@@ -103,12 +101,12 @@ class TrimController: UIViewController, GADInterstitialDelegate{
         super.viewDidLoad()
         view.backgroundColor = UIColor.white
         
-        navigationController?.navigationBar.isHidden = false
-        
-        
         self.bannerView.adUnitID = kBannerAdUnitID
         self.bannerView.rootViewController = self
         self.bannerView.load(GADRequest())
+        
+        let button = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(dismissController))
+        navigationItem.leftBarButtonItem = button
         
         if isVideoRecording {
             let button = UIBarButtonItem(image: UIImage(named: "download")?.withRenderingMode(.alwaysTemplate), style: .plain, target: self, action: #selector(saveVideo))
@@ -126,49 +124,53 @@ class TrimController: UIViewController, GADInterstitialDelegate{
         
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)        
+    func dismissController() {
+        dismiss(animated: true, completion: nil)
     }
     
     func setupViews(){
         view.backgroundColor = UIColor.white
         
+        view.addSubview(translateButton)
+        translateButton.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        translateButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        translateButton.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        translateButton.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        
+        view.addSubview(transcriptButton)
+        transcriptButton.bottomAnchor.constraint(equalTo: translateButton.topAnchor).isActive = true
+        transcriptButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        transcriptButton.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        transcriptButton.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        
+        view.addSubview(trimButton)
+        trimButton.bottomAnchor.constraint(equalTo: transcriptButton.topAnchor).isActive = true
+        trimButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        trimButton.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        trimButton.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        
+        
+        
         view.addSubview(videoThumbnail)
         videoThumbnail.topAnchor.constraint(equalTo: view.topAnchor, constant: -1).isActive = true
         //videoThumbnail.heightAnchor.constraint(equalTo: view.widthAnchor, multiplier: 9/16).isActive = true
-        videoThumbnail.heightAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        videoThumbnail.bottomAnchor.constraint(equalTo: trimButton.topAnchor).isActive = true
         videoThumbnail.widthAnchor.constraint(equalTo: view.widthAnchor, constant: 2).isActive = true
         videoThumbnail.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-    
-        view.addSubview(optionsPlaceholder)
-        optionsPlaceholder.topAnchor.constraint(equalTo: videoThumbnail.bottomAnchor).isActive = true
-        optionsPlaceholder.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-        optionsPlaceholder.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        optionsPlaceholder.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        
+        
         
         view.addSubview(bannerView)
         bannerView.widthAnchor.constraint(equalToConstant: 320).isActive = true
         bannerView.heightAnchor.constraint(equalToConstant: 50).isActive = true
         bannerView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        bannerView.bottomAnchor.constraint(equalTo: optionsPlaceholder.topAnchor).isActive = true
+        bannerView.bottomAnchor.constraint(equalTo: trimButton.topAnchor).isActive = true
         
-        optionsPlaceholder.addSubview(trimButton)
-        trimButton.topAnchor.constraint(equalTo: optionsPlaceholder.topAnchor).isActive = true
-        trimButton.centerXAnchor.constraint(equalTo: optionsPlaceholder.centerXAnchor).isActive = true
-        trimButton.widthAnchor.constraint(equalTo: optionsPlaceholder.widthAnchor).isActive = true
-        trimButton.heightAnchor.constraint(equalTo: optionsPlaceholder.heightAnchor, multiplier: 1/3).isActive = true
         
-        optionsPlaceholder.addSubview(transcriptButton)
-        transcriptButton.topAnchor.constraint(equalTo: trimButton.bottomAnchor).isActive = true
-        transcriptButton.centerXAnchor.constraint(equalTo: optionsPlaceholder.centerXAnchor).isActive = true
-        transcriptButton.widthAnchor.constraint(equalTo: optionsPlaceholder.widthAnchor).isActive = true
-        transcriptButton.heightAnchor.constraint(equalTo: optionsPlaceholder.heightAnchor, multiplier: 1/3).isActive = true
         
-        optionsPlaceholder.addSubview(translateButton)
-        translateButton.topAnchor.constraint(equalTo: transcriptButton.bottomAnchor).isActive = true
-        translateButton.centerXAnchor.constraint(equalTo: optionsPlaceholder.centerXAnchor).isActive = true
-        translateButton.widthAnchor.constraint(equalTo: optionsPlaceholder.widthAnchor).isActive = true
-        translateButton.heightAnchor.constraint(equalTo: optionsPlaceholder.heightAnchor, multiplier: 1/3).isActive = true
+        
+        
+        
         
         
 //        let blurEffect = UIBlurEffect(style: UIBlurEffectStyle.dark)
@@ -221,7 +223,10 @@ class TrimController: UIViewController, GADInterstitialDelegate{
 //        
 //    }
     
-    
+//    func showTranscriptController(){
+//        let transcriptController = TranscriptController()
+//        self.navigationController?.pushViewController(transcriptController, animated: true)
+//    }
     
     func createAndLoadInterstitial() -> GADInterstitial {
         let interstitial =
