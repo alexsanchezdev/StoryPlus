@@ -220,8 +220,8 @@ extension TrimController {
     func trimOptions(){
         let optionsMenu = UIAlertController()
         //let optionsMenu = UIAlertController(title: NSLocalizedString("MenuTitle", comment: "This is the message that will be shown on top of the alert controller"), message: nil, preferredStyle: .actionSheet)
-        let snapchat = UIAlertAction(title: "Snapchat (10 sec)", style: .default, handler: {(action) in
-            self.trimDuration = 10
+        let snapchat = UIAlertAction(title: "Custom (5 sec)", style: .default, handler: {(action) in
+            self.trimDuration = 5
             self.handleAutoTrim()
         })
         
@@ -254,8 +254,8 @@ extension TrimController {
     func transcriptOptions(){
         let optionsMenu = UIAlertController()
         //let optionsMenu = UIAlertController(title: NSLocalizedString("MenuTitle", comment: "This is the message that will be shown on top of the alert controller"), message: nil, preferredStyle: .actionSheet)
-        let snapchat = UIAlertAction(title: "Snapchat (10 sec)", style: .default, handler: {(action) in
-            self.trimDuration = 10
+        let snapchat = UIAlertAction(title: "Custom (5 sec)", style: .default, handler: {(action) in
+            self.trimDuration = 5
             self.handleTranscript()
         })
         

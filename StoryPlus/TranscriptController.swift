@@ -10,6 +10,8 @@ import UIKit
 import AVFoundation
 import AVKit
 import Speech
+import Photos
+import SwiftSpinner
 
 class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     
@@ -17,6 +19,11 @@ class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout
     let reuseIdentifier = "cell"
     var thumbnails: [UIImage]?
     var videoURLs: [URL]?
+    var transcriptions = [String]()
+    var currentVideoIndex = 0
+    var currentVideo: Float = 1.0
+    var progress = 0.0
+    
     
     lazy var selectLanguage: UIButton = {
         let button = UIButton(type: .system)
@@ -34,7 +41,7 @@ class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("TRANSCRIPT VIDEOS", for: .normal)
-        //button.addTarget(self, action: #selector(trimOptions), for: .touchUpInside)
+        button.addTarget(self, action: #selector(transcriptVideos), for: .touchUpInside)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: UIFontWeightBold)
         button.backgroundColor = UIColor.rgb(r: 245, g: 45, b: 85, a: 1)//rgb(52, 152, 219)
         button.setTitleColor(UIColor.white, for: .normal)
@@ -61,12 +68,19 @@ class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout
         view.backgroundColor = UIColor.white
         videosCollectionView.delegate = self
         videosCollectionView.dataSource = self
+        
+        createEmptyStringArrayForVideos()
         setupViews()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         print("Language code: " + languageCode)
+        
+        for i in 0..<transcriptions.count {
+            print("First video: \(transcriptions[i])")
+        }
+        
     }
     
     func setupViews(){
@@ -121,9 +135,10 @@ class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if let url = videoURLs?[indexPath.row] {
-            playVideo(url: url)
-        }
+        //if let url = videoURLs?[indexPath.row] {
+            //playVideo(url: url)
+        //}
+        showEditControllerFor(index: indexPath.row)
     }
     
     func playVideo(url: URL){
@@ -229,6 +244,211 @@ class TranscriptController: UIViewController, UICollectionViewDelegateFlowLayout
             }
         }
         
+    }
+    
+    func showEditControllerFor(index: Int){
+        let editController = EditController()
+        editController.videoURL = self.videoURLs?[index]
+        editController.title = "Video #\(index + 1)"
+        editController.transcriptController = self
+        editController.videoIndex = index
+        self.navigationController?.pushViewController(editController, animated: true)
+    }
+    
+    func createEmptyStringArrayForVideos(){
+        transcriptions.removeAll()
+        if let array = videoURLs {
+            for _ in 0..<array.count {
+                transcriptions.append("")
+            }
+        }
+    }
+    
+    func transcriptVideos(){
+        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.exportFire), userInfo: nil, repeats: true)
+        detectAssetLenght(forIndex: 0)
+    }
+    
+    func detectAssetLenght(forIndex: Int) {
+        
+        guard let url = videoURLs?[forIndex] else { return }
+        let asset = AVAsset(url: url)
+        
+        let length = Float(asset.duration.value) / Float(asset.duration.timescale)
+
+        trimAndComposition(asset: asset, start: 0.0, end: length)
+    }
+    
+    func trimAndComposition(asset: AVAsset, start: Float, end: Float){
+        
+        let mixComposition = AVMutableComposition()
+        let compositionVideoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaTypeVideo,preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+        do {
+            try compositionVideoTrack.insertTimeRange(CMTimeRangeMake(kCMTimeZero, asset.duration),
+                                                      of: asset.tracks(withMediaType: AVMediaTypeVideo)[0] ,
+                                                      at: kCMTimeZero)
+        } catch _ {
+            print("Failed to load first track")
+        }
+        
+        
+        let audioTrack = mixComposition.addMutableTrack(withMediaType: AVMediaTypeAudio, preferredTrackID: 0)
+        do {
+            try audioTrack.insertTimeRange(CMTimeRangeMake(kCMTimeZero, asset.duration),
+                                           of: asset.tracks(withMediaType: AVMediaTypeAudio)[0] ,
+                                           at: kCMTimeZero)
+        } catch _ {
+            print("Failed to load audio track")
+        }
+        
+        let assetVideoTrack = asset.tracks(withMediaType: AVMediaTypeVideo)[0]
+        compositionVideoTrack.preferredTransform = assetVideoTrack.preferredTransform
+        
+        // check for orientation
+        var isVideoAssetPortrait = false
+        
+        let videoTransform = compositionVideoTrack.preferredTransform;
+        if (videoTransform.a == 0 && videoTransform.b == 1.0 && videoTransform.c == -1.0 && videoTransform.d == 0) {
+            isVideoAssetPortrait = true
+        }
+        if (videoTransform.a == 0 && videoTransform.b == -1.0 && videoTransform.c == 1.0 && videoTransform.d == 0) {
+            isVideoAssetPortrait = true
+        }
+        if (videoTransform.a == 1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == 1.0) {
+            isVideoAssetPortrait = false
+        }
+        if (videoTransform.a == -1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == -1.0) {
+            isVideoAssetPortrait = false
+        }
+        
+        // change naturalsize
+        var naturalSize: CGSize
+        if(isVideoAssetPortrait){
+            naturalSize = CGSize(width: compositionVideoTrack.naturalSize.height, height: compositionVideoTrack.naturalSize.width)
+        } else {
+            naturalSize = compositionVideoTrack.naturalSize
+        }
+        
+        // 1 - Set up the text layer
+        let subtitleText = CATextLayer()
+        let myAttributes = [NSForegroundColorAttributeName: UIColor.white, NSFontAttributeName: UIFont.systemFont(ofSize: 28, weight: UIFontWeightMedium)]
+        let string = NSAttributedString(string: transcriptions[currentVideoIndex], attributes: myAttributes)
+        subtitleText.string = string
+        subtitleText.alignmentMode = kCAAlignmentCenter
+        subtitleText.allowsFontSubpixelQuantization = true
+        
+        subtitleText.isWrapped = true
+        let frameSetter = CTFramesetterCreateWithAttributedString(string)
+        let range = CFRange(location: 0, length: string.length)
+        let size = CTFramesetterSuggestFrameSizeWithConstraints(frameSetter, range, nil, CGSize(width: naturalSize.width - 40, height: CGFloat.greatestFiniteMagnitude), nil)
+        
+        subtitleText.frame = CGRect(x: 20, y: 60, width: naturalSize.width - 40, height: size.height)
+        subtitleText.contentsScale = UIScreen.main.scale
+        
+        
+        let overlayLayer = CALayer()
+        overlayLayer.addSublayer(subtitleText)
+        overlayLayer.frame = CGRect(x: 0, y: 0, width: naturalSize.width, height: subtitleText.frame.height + 80)
+        overlayLayer.backgroundColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        overlayLayer.masksToBounds = true
+        
+        //sorts the layer in proper order
+        
+        let parentLayer = CALayer()
+        let videoLayer = CALayer()
+        
+        parentLayer.frame = CGRect(x: 0, y: 0, width: naturalSize.width, height: naturalSize.height)
+        videoLayer.frame = CGRect(x: 0, y: 0, width: naturalSize.width, height: naturalSize.height)
+        parentLayer.addSublayer(videoLayer)
+        parentLayer.addSublayer(overlayLayer)
+        
+        //create the composition and add the instructions to insert the layer:
+        
+        let videoComp = AVMutableVideoComposition()
+        videoComp.renderSize = naturalSize
+        videoComp.frameDuration = CMTimeMake(1, 30)
+        videoComp.animationTool = AVVideoCompositionCoreAnimationTool(postProcessingAsVideoLayer: videoLayer, in: parentLayer)
+        
+        /// instruction
+        let instruction = AVMutableVideoCompositionInstruction()
+        instruction.timeRange = CMTimeRange(start: kCMTimeZero, duration: mixComposition.duration)
+        
+        let mixVideoTrack = mixComposition.tracks(withMediaType: AVMediaTypeVideo)[0]
+        let layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: mixVideoTrack)
+        instruction.layerInstructions = [layerInstruction]
+        
+        layerInstruction.setTransform(compositionVideoTrack.preferredTransform, at: kCMTimeZero)
+        layerInstruction.setOpacity(0.0, at: asset.duration)
+        
+        videoComp.instructions = [instruction]
+        
+        let manager = FileManager.default
+        guard let documentDirectory = try? manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true) else {return}
+        
+        var outputURL = documentDirectory.appendingPathComponent("output")
+        
+        do {
+            try manager.createDirectory(at: outputURL, withIntermediateDirectories: true, attributes: nil)
+            
+            outputURL = outputURL.appendingPathComponent("\(UUID().uuidString).mp4")
+        } catch let error {
+            print(error)
+        }
+        
+        _ = try? manager.removeItem(at: outputURL)
+        
+        guard let exportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality) else { return }
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = AVFileTypeQuickTimeMovie
+        
+        let startTime = CMTime(seconds: Double(start), preferredTimescale: 1000)
+        let endTime = CMTime(seconds: Double(end), preferredTimescale: 1000)
+        let timeRange = CMTimeRange(start: startTime, end: endTime)
+        exportSession.timeRange = timeRange
+        exportSession.videoComposition = videoComp
+        
+        exportSession.exportAsynchronously{
+            switch exportSession.status {
+            case .completed:
+                self.exportMediaToLibrary(outputURL: outputURL)
+            case .failed:
+                print("failed \(exportSession.error)")
+            case .cancelled:
+                print("cancelled \(exportSession.error)")
+                
+            default: break
+                
+            }
+        }
+    }
+    
+    func exportMediaToLibrary(outputURL: URL){
+        PHPhotoLibrary.shared().performChanges({
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: outputURL)
+        }) { saved, error in
+            if saved {
+                let endOfArray = self.transcriptions.count - 1
+                self.currentVideoIndex += 1
+                if (self.currentVideoIndex <= endOfArray) {
+                    self.currentVideo += 1.0
+                    self.progress = Double(self.currentVideo / Float(self.transcriptions.count))
+                    self.detectAssetLenght(forIndex: self.currentVideoIndex)
+                } else {
+                    self.progress = 1.0
+                }
+            }
+        }
+    }
+    
+    func exportFire(_ timer: Timer) {
+        
+        SwiftSpinner.show(progress: progress, title: "Exporting... \(Int(progress*100))%")
+        if progress >= 1.0 {
+            timer.invalidate()
+            SwiftSpinner.show(duration: 2.0, title: "Exported to camera roll.", animated: false)
+            self.currentVideo = 1.0
+            self.progress = 0.0
+        }
     }
     
 

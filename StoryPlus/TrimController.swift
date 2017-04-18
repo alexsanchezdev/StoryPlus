@@ -131,14 +131,14 @@ class TrimController: UIViewController, GADInterstitialDelegate{
     func setupViews(){
         view.backgroundColor = UIColor.white
         
-        view.addSubview(translateButton)
-        translateButton.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-        translateButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        translateButton.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        translateButton.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        //view.addSubview(translateButton)
+        //translateButton.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        //translateButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        //translateButton.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        //translateButton.heightAnchor.constraint(equalToConstant: 72).isActive = true
         
         view.addSubview(transcriptButton)
-        transcriptButton.bottomAnchor.constraint(equalTo: translateButton.topAnchor).isActive = true
+        transcriptButton.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         transcriptButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         transcriptButton.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
         transcriptButton.heightAnchor.constraint(equalToConstant: 72).isActive = true

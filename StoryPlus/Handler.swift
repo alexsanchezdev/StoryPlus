@@ -12,7 +12,7 @@ import Photos
 import Speech
 
 
-extension EditController {
+extension Controller {
     
     func autoTrimVideo(){
         guard let url = videoURL else { return }

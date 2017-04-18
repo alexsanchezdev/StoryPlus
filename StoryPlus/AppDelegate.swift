@@ -32,7 +32,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         navigationBarAppearance.isTranslucent = false
         
         GADMobileAds.configure(withApplicationID: "ca-app-pub-3940256099942544~1458002511")
-        
+        clearTemporaryDirectory()
         return true
     }
 
@@ -65,6 +65,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let tmp = try? manager.contentsOfDirectory(at: manager.temporaryDirectory, includingPropertiesForKeys: nil, options: []) {
             do {
                 for file in tmp {
+                    print("Remove item called??")
                     try manager.removeItem(at: file)
                 }
             } catch let error as NSError {
@@ -81,14 +82,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let manager = FileManager.default
         
         if let documentDirectory = try? manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true) {
-            let url = documentDirectory.appendingPathComponent("videos")
+            let url = documentDirectory.appendingPathComponent("videos", isDirectory: true)
+            let url2 = documentDirectory.appendingPathComponent("transcriptions", isDirectory: true)
             
             do {
                 try manager.removeItem(at: url)
-                let tmp = try manager.contentsOfDirectory(at: manager.temporaryDirectory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
-                for file in tmp {
-                    try manager.removeItem(at: file)
-                }
+                try manager.removeItem(at: url2)
+                // tmp = try manager.contentsOfDirectory(at: manager.temporaryDirectory, includingPropertiesForKeys: nil, options: [])
+                //for file in tmp {
+                //    try manager.removeItem(at: file)
+                //}
             }
             catch let error as NSError {
                 print("Ooops! Something went wrong: \(error)")
